@@ -284,3 +284,5 @@ fabric.properties
 .DS_Store
 .DS_Store
 final_template.zip
+
+.vscode
