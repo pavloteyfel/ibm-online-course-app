@@ -1,14 +1,16 @@
-from django.shortcuts import render
+import logging
+
+from django.contrib.auth import authenticate, login, logout
+
+# TODO: django.contrib.auth.get_user_model()
+from django.contrib.auth.models import User # ignore: pylint
 from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from django.views import generic
 
 # <HINT> Import any new Models here
 from .models import Course, Enrollment
-from django.contrib.auth.models import User
-from django.shortcuts import get_object_or_404, render, redirect
-from django.urls import reverse
-from django.views import generic
-from django.contrib.auth import login, logout, authenticate
-import logging
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
