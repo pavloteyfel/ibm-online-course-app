@@ -3,7 +3,7 @@ from django.utils.timezone import now
 
 try:
     from django.db import models
-except Exception:
+except ImportError:
     print("There was an error loading django modules. Do you have django installed?")
     sys.exit()
 
