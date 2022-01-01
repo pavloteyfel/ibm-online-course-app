@@ -1,4 +1,6 @@
 import sys
+
+from django.db.models.deletion import CASCADE
 from django.utils.timezone import now
 
 try:
@@ -7,11 +9,11 @@ except ImportError:
     print("There was an error loading django modules. Do you have django installed?")
     sys.exit()
 
-from django.conf import settings
 import uuid
 
+from django.conf import settings
 
-# Instructor model
+
 class Instructor(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -24,7 +26,6 @@ class Instructor(models.Model):
         return self.user.username
 
 
-# Learner model
 class Learner(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -49,7 +50,6 @@ class Learner(models.Model):
         return self.user.username + "," + self.occupation
 
 
-# Course model
 class Course(models.Model):
     name = models.CharField(null=False, max_length=30, default="online course")
     image = models.ImageField(upload_to="course_images/")
@@ -63,13 +63,38 @@ class Course(models.Model):
     def __str__(self):
         return "Name: " + self.name + "," + "Description: " + self.description
 
+class Choice(models.Model):
+    choice_text = models.CharField(max_length=255, null=False)
+    is_correct = models.BooleanField(default=False)
 
-# Lesson model
+    def __str__(self):
+        return f"{self.choice_text} ({self.is_correct})"
+
+class Question(models.Model):
+    question_text = models.CharField(max_length=254, null=False)
+    grade = models.IntegerField(default=-1)
+    choice = models.ManyToManyField(Choice)
+
+    def is_get_score(self, selected_ids):
+        all_answers = self.choice_set.filter(is_correct=True).count()
+        selected_correct = self.choice_set.filter(is_correct=True, id__in=selected_ids).count()
+        if all_answers == selected_correct:
+            return True
+        else:
+            return False
+    
+    def __str__(self):
+        return f"{self.question_text}"
+
 class Lesson(models.Model):
     title = models.CharField(max_length=200, default="title")
     order = models.IntegerField(default=0)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     content = models.TextField()
+    question = models.ManyToManyField(Question)
+
+    def __str__(self):
+        return f"{self.title}"
 
 
 # Enrollment model
@@ -86,41 +111,7 @@ class Enrollment(models.Model):
     mode = models.CharField(max_length=5, choices=COURSE_MODES, default=AUDIT)
     rating = models.FloatField(default=5.0)
 
+class Submission(models.Model):
+    enrollment = models.ForeignKey(Enrollment, on_delete=CASCADE)
+    choices = models.ManyToManyField(Choice)
 
-# <HINT> Create a Question Model with:
-# Used to persist question content for a course
-# Has a One-To-Many (or Many-To-Many if you want to reuse questions) relationship with course
-# Has a grade point for each question
-# Has question content
-# Other fields and methods you would like to design
-# class Question(models.Model):
-# Foreign key to lesson
-# question text
-# question grade/mark
-
-# <HINT> A sample model method to calculate if learner get the score of the question
-# def is_get_score(self, selected_ids):
-#    all_answers = self.choice_set.filter(is_correct=True).count()
-#    selected_correct = self.choice_set.filter(is_correct=True, id__in=selected_ids).count()
-#    if all_answers == selected_correct:
-#        return True
-#    else:
-#        return False
-
-
-#  <HINT> Create a Choice Model with:
-# Used to persist choice content for a question
-# One-To-Many (or Many-To-Many if you want to reuse choices) relationship with Question
-# Choice content
-# Indicate if this choice of the question is a correct one or not
-# Other fields and methods you would like to design
-# class Choice(models.Model):
-
-# <HINT> The submission model
-# One enrollment could have multiple submission
-# One submission could have multiple choices
-# One choice could belong to multiple submissions
-# class Submission(models.Model):
-#    enrollment = models.ForeignKey(Enrollment, on_delete=models.CASCADE)
-#    choices = models.ManyToManyField(Choice)
-#    Other fields and methods you would like to design
