@@ -1,20 +1,16 @@
 import logging
+from math import floor
 
 from django.contrib.auth import authenticate, login, logout
-
-# TODO: django.contrib.auth.get_user_model()
-from django.contrib.auth.models import User # ignore: pylint
+from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views import generic
 
-# <HINT> Import any new Models here
-from .models import Course, Enrollment
+from .models import Choice, Course, Enrollment, Submission
 
-# Get an instance of a logger
 logger = logging.getLogger(__name__)
-# Create your views here.
 
 
 def registration_request(request):
@@ -73,14 +69,12 @@ def logout_request(request):
 def check_if_enrolled(user, course):
     is_enrolled = False
     if user.id is not None:
-        # Check if user enrolled
         num_results = Enrollment.objects.filter(user=user, course=course).count()
         if num_results > 0:
             is_enrolled = True
     return is_enrolled
 
 
-# CourseListView
 class CourseListView(generic.ListView):
     template_name = "onlinecourse/course_list_bootstrap.html"
     context_object_name = "course_list"
@@ -105,7 +99,6 @@ def enroll(request, course_id):
 
     is_enrolled = check_if_enrolled(user, course)
     if not is_enrolled and user.is_authenticated:
-        # Create an enrollment
         Enrollment.objects.create(user=user, course=course, mode="honor")
         course.total_enrollment += 1
         course.save()
@@ -115,31 +108,43 @@ def enroll(request, course_id):
     )
 
 
-# <HINT> Create a submit view to create an exam submission record for a course enrollment,
-# you may implement it based on following logic:
-# Get user and course object, then get the associated enrollment object created when the user enrolled the course
-# Create a submission object referring to the enrollment
-# Collect the selected choices from exam form
-# Add each selected choice object to the submission object
-# Redirect to show_exam_result with the submission id
-# def submit(request, course_id):
+def extract_answers(request):
+    submitted_anwsers = []
+    for key in request.POST:
+        if key.startswith("choice"):
+            value = request.POST[key]
+            choice_id = int(value)
+            submitted_anwsers.append(choice_id)
+    return submitted_anwsers
 
 
-# <HINT> A example method to collect the selected choices from the exam form from the request object
-# def extract_answers(request):
-#    submitted_anwsers = []
-#    for key in request.POST:
-#        if key.startswith('choice'):
-#            value = request.POST[key]
-#            choice_id = int(value)
-#            submitted_anwsers.append(choice_id)
-#    return submitted_anwsers
+def submit(request, course_id):
+    choices = extract_answers(request)
+    enrollment = Enrollment.objects.get(user=request.user, course_id=course_id)
+    submission = Submission.objects.create(enrollment_id=enrollment.id)
+    submission.choices.set(Choice.objects.filter(id__in=choices))
+    submission.save()
+    return redirect("onlinecourse:show_exam_result", course_id, submission.id)
 
 
-# <HINT> Create an exam result view to check if learner passed exam and show their question results and result for each question,
-# you may implement it based on the following logic:
-# Get course and submission based on their ids
-# Get the selected choice ids from the submission record
-# For each selected choice, check if it is a correct answer or not
-# Calculate the total score
-# def show_exam_result(request, course_id, submission_id):
+def show_exam_result(request, course_id, submission_id):
+    current_grade = 0
+    total_grade = 0
+    course = Course.objects.get(id=course_id)
+    submission = Submission.objects.get(id=submission_id)
+    choices = submission.choices.all()
+    questions = course.questions.all()
+
+    for question in questions:
+        total_grade += question.grade
+        if question.is_get_score(choices):
+            current_grade += question.grade
+
+    score = floor((current_grade / total_grade) * 100)
+
+    context = {
+        "score": score,
+        "course": course,
+        "choices": choices,
+    }
+    return render(request, "onlinecourse/exam_result_bootstrap.html", context)
