@@ -47,7 +47,31 @@ class Learner(models.Model):
     social_link = models.URLField(max_length=200)
 
     def __str__(self):
-        return self.user.username + "," + self.occupation
+        return f"{self.username}, {self.occupation}"
+
+
+class Choice(models.Model):
+    choice_text = models.CharField(max_length=255, null=False)
+    is_correct = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.choice_text} ({self.is_correct})"
+
+
+class Question(models.Model):
+    question_text = models.CharField(max_length=254, null=False)
+    grade = models.IntegerField(default=1)
+    choices = models.ManyToManyField(Choice)
+
+    def is_get_score(self, selected_ids):
+        all_answers = self.choices.filter(is_correct=True).count()
+        selected_correct = self.choices.filter(
+            is_correct=True, id__in=selected_ids
+        ).count()
+        return all_answers == selected_correct
+
+    def __str__(self):
+        return f"{self.question_text}"
 
 
 class Course(models.Model):
@@ -58,48 +82,23 @@ class Course(models.Model):
     instructors = models.ManyToManyField(Instructor)
     users = models.ManyToManyField(settings.AUTH_USER_MODEL, through="Enrollment")
     total_enrollment = models.IntegerField(default=0)
+    questions = models.ManyToManyField(Question)
     is_enrolled = False
 
     def __str__(self):
-        return "Name: " + self.name + "," + "Description: " + self.description
+        return f"Name: {self.name}, Description: {self.description}"
 
-class Choice(models.Model):
-    choice_text = models.CharField(max_length=255, null=False)
-    is_correct = models.BooleanField(default=False)
-
-    def __str__(self):
-        return f"{self.choice_text} ({self.is_correct})"
-
-class Question(models.Model):
-    question_text = models.CharField(max_length=254, null=False)
-    grade = models.IntegerField(default=-1)
-    choice = models.ManyToManyField(Choice)
-
-    def is_get_score(self, selected_ids):
-        all_answers = self.choice_set.filter(is_correct=True).count()
-        selected_correct = self.choice_set.filter(is_correct=True, id__in=selected_ids).count()
-        if all_answers == selected_correct:
-            return True
-        else:
-            return False
-    
-    def __str__(self):
-        return f"{self.question_text}"
 
 class Lesson(models.Model):
     title = models.CharField(max_length=200, default="title")
     order = models.IntegerField(default=0)
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     content = models.TextField()
-    question = models.ManyToManyField(Question)
 
     def __str__(self):
-        return f"{self.title}"
+        return f"Lesson: ({self.order}) {self.title}"
 
 
-# Enrollment model
-# <HINT> Once a user enrolled a class, an enrollment entry should be created between the user and course
-# And we could use the enrollment to track information such as exam submissions
 class Enrollment(models.Model):
     AUDIT = "audit"
     HONOR = "honor"
@@ -111,7 +110,7 @@ class Enrollment(models.Model):
     mode = models.CharField(max_length=5, choices=COURSE_MODES, default=AUDIT)
     rating = models.FloatField(default=5.0)
 
+
 class Submission(models.Model):
     enrollment = models.ForeignKey(Enrollment, on_delete=CASCADE)
     choices = models.ManyToManyField(Choice)
-
