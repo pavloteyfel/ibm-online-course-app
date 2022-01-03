@@ -286,3 +286,5 @@ fabric.properties
 final_template.zip
 
 .vscode
+db.sqlite3
+media
