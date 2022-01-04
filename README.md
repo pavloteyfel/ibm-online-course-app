@@ -1,15 +1,11 @@
+# Online Course Django Application
 
-**General Notes**
+This is my capstone project for the [Developing Applications with SQL Databases and Django](https://www.coursera.org/learn/developing-applications-with-sql-databases-and-django) course.
 
-An `onlinecourse` app has already been provided in this repo upon which you will be adding a new assesement feature.
+## Project Story
 
-- If you want to develop the final project on Theia hosted by [IBM Developer Skills Network](https://labs.cognitiveclass.ai/), you will need to create the same project structure on Theia workspace and save it everytime you close the browser
-- Or you could develop the final project locally by setting up your own Python runtime and IDE
-- Hints for the final project are left on source code files
-- You may choose any cloud platform for deployment (default is IBM Cloud Foundry)
-- Depends on your deployment, you may choose any SQL database Django supported such as SQLite3, PostgreSQL, and MySQL (default is SQLite3)
+In this scenario, you have recently joined a new development team as a full-stack Django developer. The development team has started building a minimum viable product (MVP) of an online course app. 
 
-**ER Diagram**
-For your reference, we have prepared the ER diagram design for the new assesement feature.
+Based on the user feedback, the stakeholders of the product have planned to add an assessment feature to the online course web app to evaluate learners. For the new assessment feature, instructors should be able to create exams with questions, and learners should be able to complete the course if they pass the exam. 
 
-![Onlinecourse ER Diagram](https://github.com/ibm-developer-skills-network/final-cloud-app-with-database/blob/master/static/media/course_images/onlinecourse_app_er.png)
+As a new team member, the lead developer has assigned this new feature to you. You will need to leverage your Django full-stack skills to design and implement models, templates, and views. 
