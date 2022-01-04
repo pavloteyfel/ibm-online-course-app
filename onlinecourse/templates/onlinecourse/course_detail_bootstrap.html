@@ -61,7 +61,7 @@
         <div id="exam" class="collapse">
             {% if user.is_authenticated %}
             <form id="questionform" action="submit/" method="post">
-                {% csrf_token %} 
+                {% csrf_token %}
                 {% for question in course.questions.all %}
                 <div class="card mt-1">
                     <div class="card-header">
@@ -79,12 +79,12 @@
                                     </label>
                                 </div>
                             </li>
-                            
+
                         </ul>
                         {% endfor %}
                     </div>
                 </div>
-                {% endfor %} 
+                {% endfor %}
                 <br />
                 <input class="btn btn-success btn-block" type="submit" value="Submit" />
             </form>
@@ -104,4 +104,5 @@
         </div>
     </div>
 </body>
+
 </html>
